@@ -5,185 +5,168 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  Dimensions,
+  ScrollView,
+  Alert,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../theme/theme';
+import { useAuth } from '../context/AuthContext';
 
-const { width, height } = Dimensions.get('window');
-
-export default function LoginScreen({ navigation }) {
+export default function LoginScreen() {
   const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    name: '',
-  });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [nickname, setNickname] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
-    // Xử lý đăng nhập/đăng ký
-    if (isLogin) {
-      // Đăng nhập
-      console.log('Đăng nhập:', formData.email, formData.password);
-    } else {
-      // Đăng ký
-      if (formData.password !== formData.confirmPassword) {
-        alert('Mật khẩu xác nhận không khớp');
-        return;
-      }
-      console.log('Đăng ký:', formData);
+  const { signIn, signUp } = useAuth();
+
+  const handleSubmit = async () => {
+    if (!email.trim() || !password.trim()) {
+      Alert.alert('Lỗi', 'Vui lòng điền đầy đủ thông tin');
+      return;
     }
-    
-    // Chuyển đến màn hình ghép đôi
-    navigation.navigate('Pairing');
-  };
 
-  const toggleMode = () => {
-    setIsLogin(!isLogin);
-    setFormData({
-      email: '',
-      password: '',
-      confirmPassword: '',
-      name: '',
-    });
+    if (!isLogin && password !== confirmPassword) {
+      Alert.alert('Lỗi', 'Mật khẩu xác nhận không khớp');
+      return;
+    }
+
+    if (!isLogin && !nickname.trim()) {
+      Alert.alert('Lỗi', 'Vui lòng nhập biệt danh');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      if (isLogin) {
+        const result = await signIn(email.trim(), password);
+        if (!result.success) {
+          Alert.alert('Lỗi đăng nhập', result.error);
+        }
+      } else {
+        const profileData = {
+          email: email.trim(),
+          nickname: nickname.trim(),
+          birthDate: '1995-01-01', // Default value
+          avatarUrl: null,
+        };
+        
+        const result = await signUp(email.trim(), password, profileData);
+        if (!result.success) {
+          Alert.alert('Lỗi đăng ký', result.error);
+        } else {
+          Alert.alert('Thành công', 'Tài khoản đã được tạo! Vui lòng kiểm tra email để xác thực.');
+        }
+      }
+    } catch (error) {
+      Alert.alert('Lỗi', 'Có lỗi xảy ra, vui lòng thử lại');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
-      <ScrollView 
-        contentContainerStyle={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Header với gradient đẹp */}
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         <LinearGradient
           colors={theme.gradients.primary}
           style={styles.header}
         >
-          <View style={styles.headerContent}>
-            <View style={styles.logoContainer}>
+          <View style={styles.logoContainer}>
+            <View style={styles.logo}>
               <Ionicons name="heart" size={40} color={theme.colors.white} />
             </View>
-            <Text style={styles.headerTitle}>
-              {isLogin ? 'Chào mừng trở lại' : 'Tạo tài khoản mới'}
-            </Text>
-            <Text style={styles.headerSubtitle}>
-              {isLogin 
-                ? 'Đăng nhập để kết nối với người yêu' 
-                : 'Bắt đầu hành trình tình yêu của bạn'
-              }
-            </Text>
+            <Text style={styles.appName}>Love Together</Text>
+            <Text style={styles.appSubtitle}>Ứng dụng dành cho cặp đôi</Text>
           </View>
         </LinearGradient>
 
-        {/* Form Container */}
         <View style={styles.formContainer}>
-          <View style={styles.formCard}>
-            <View style={styles.formHeader}>
-              <Text style={styles.formTitle}>
-                {isLogin ? 'Đăng nhập' : 'Đăng ký'}
-              </Text>
-              <Text style={styles.formSubtitle}>
-                {isLogin 
-                  ? 'Nhập thông tin để đăng nhập' 
-                  : 'Điền thông tin để tạo tài khoản'
-                }
-              </Text>
+          <Text style={styles.formTitle}>
+            {isLogin ? 'Đăng nhập' : 'Đăng ký'}
+          </Text>
+
+          {!isLogin && (
+            <View style={styles.inputContainer}>
+              <Ionicons name="person" size={20} color={theme.colors.primary} />
+              <TextInput
+                style={styles.input}
+                placeholder="Biệt danh"
+                value={nickname}
+                onChangeText={setNickname}
+                autoCapitalize="words"
+              />
             </View>
+          )}
 
-            {!isLogin && (
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Họ và tên</Text>
-                <View style={styles.inputContainer}>
-                  <Ionicons name="person" size={20} color={theme.colors.primary} />
-                  <TextInput
-                    style={styles.input}
-                    value={formData.name}
-                    onChangeText={(text) => setFormData({ ...formData, name: text })}
-                    placeholder="Nhập họ và tên của bạn"
-                    placeholderTextColor={theme.colors.gray}
-                  />
-                </View>
-              </View>
-            )}
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Email</Text>
-              <View style={styles.inputContainer}>
-                <Ionicons name="mail" size={20} color={theme.colors.primary} />
-                <TextInput
-                  style={styles.input}
-                  value={formData.email}
-                  onChangeText={(text) => setFormData({ ...formData, email: text })}
-                  placeholder="Nhập email của bạn"
-                  placeholderTextColor={theme.colors.gray}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-              </View>
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Mật khẩu</Text>
-              <View style={styles.inputContainer}>
-                <Ionicons name="lock-closed" size={20} color={theme.colors.primary} />
-                <TextInput
-                  style={styles.input}
-                  value={formData.password}
-                  onChangeText={(text) => setFormData({ ...formData, password: text })}
-                  placeholder="Nhập mật khẩu"
-                  placeholderTextColor={theme.colors.gray}
-                  secureTextEntry
-                />
-              </View>
-            </View>
-
-            {!isLogin && (
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Xác nhận mật khẩu</Text>
-                <View style={styles.inputContainer}>
-                  <Ionicons name="lock-closed" size={20} color={theme.colors.primary} />
-                  <TextInput
-                    style={styles.input}
-                    value={formData.confirmPassword}
-                    onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
-                    placeholder="Nhập lại mật khẩu"
-                    placeholderTextColor={theme.colors.gray}
-                    secureTextEntry
-                  />
-                </View>
-              </View>
-            )}
-
-            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-              <LinearGradient
-                colors={theme.gradients.primary}
-                style={styles.submitButtonGradient}
-              >
-                <Text style={styles.submitButtonText}>
-                  {isLogin ? 'Đăng nhập' : 'Đăng ký'}
-                </Text>
-              </LinearGradient>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.toggleButton} onPress={toggleMode}>
-              <Text style={styles.toggleButtonText}>
-                {isLogin 
-                  ? 'Chưa có tài khoản? Đăng ký ngay' 
-                  : 'Đã có tài khoản? Đăng nhập'
-                }
-              </Text>
-            </TouchableOpacity>
+          <View style={styles.inputContainer}>
+            <Ionicons name="mail" size={20} color={theme.colors.primary} />
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
           </View>
+
+          <View style={styles.inputContainer}>
+            <Ionicons name="lock-closed" size={20} color={theme.colors.primary} />
+            <TextInput
+              style={styles.input}
+              placeholder="Mật khẩu"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+          </View>
+
+          {!isLogin && (
+            <View style={styles.inputContainer}>
+              <Ionicons name="lock-closed" size={20} color={theme.colors.primary} />
+              <TextInput
+                style={styles.input}
+                placeholder="Xác nhận mật khẩu"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry
+              />
+            </View>
+          )}
+
+          <TouchableOpacity
+            style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+            onPress={handleSubmit}
+            disabled={loading}
+          >
+            <LinearGradient
+              colors={theme.gradients.primary}
+              style={styles.submitGradient}
+            >
+              <Text style={styles.submitText}>
+                {loading ? 'Đang xử lý...' : (isLogin ? 'Đăng nhập' : 'Đăng ký')}
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.switchButton}
+            onPress={() => setIsLogin(!isLogin)}
+          >
+            <Text style={styles.switchText}>
+              {isLogin ? 'Chưa có tài khoản? Đăng ký ngay' : 'Đã có tài khoản? Đăng nhập'}
+            </Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -193,116 +176,92 @@ export default function LoginScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#fff',
   },
-  scrollContainer: {
+  scrollContent: {
     flexGrow: 1,
   },
   header: {
-    paddingTop: 40,
+    paddingTop: 60,
     paddingBottom: 40,
-    paddingHorizontal: theme.spacing.lg,
-  },
-  headerContent: {
     alignItems: 'center',
   },
   logoContainer: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    borderWidth: 2,
-    borderColor: theme.colors.white,
+    alignItems: 'center',
+  },
+  logo: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: theme.spacing.lg,
+    marginBottom: 16,
   },
-  headerTitle: {
+  appName: {
     fontSize: 28,
     fontWeight: 'bold',
     color: theme.colors.white,
-    marginBottom: theme.spacing.sm,
-    textAlign: 'center',
+    marginBottom: 8,
   },
-  headerSubtitle: {
+  appSubtitle: {
     fontSize: 16,
     color: theme.colors.white,
     opacity: 0.9,
-    textAlign: 'center',
-    lineHeight: 22,
   },
   formContainer: {
     flex: 1,
-    padding: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl * 2, // Thêm padding bottom để tránh keyboard
-  },
-  formCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.xl,
-    ...theme.shadows.large,
-  },
-  formHeader: {
-    alignItems: 'center',
-    marginBottom: theme.spacing.xl,
+    paddingHorizontal: 24,
+    paddingTop: 40,
   },
   formTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: theme.colors.text,
-    marginBottom: theme.spacing.sm,
-  },
-  formSubtitle: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
+    marginBottom: 32,
     textAlign: 'center',
-    lineHeight: 20,
-  },
-  inputGroup: {
-    marginBottom: theme.spacing.lg,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: theme.spacing.sm,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: theme.colors.lightGray,
-    borderRadius: theme.borderRadius.md,
-    paddingHorizontal: theme.spacing.md,
+    borderColor: '#e9ecef',
   },
   input: {
     flex: 1,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
     fontSize: 16,
     color: theme.colors.text,
   },
   submitButton: {
-    borderRadius: theme.borderRadius.md,
+    marginTop: 24,
+    borderRadius: 12,
     overflow: 'hidden',
-    marginTop: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
   },
-  submitButtonGradient: {
-    paddingVertical: theme.spacing.md,
+  submitButtonDisabled: {
+    opacity: 0.6,
+  },
+  submitGradient: {
+    paddingVertical: 16,
     alignItems: 'center',
   },
-  submitButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+  submitText: {
+    fontSize: 18,
+    fontWeight: 'bold',
     color: theme.colors.white,
   },
-  toggleButton: {
+  switchButton: {
+    marginTop: 24,
     alignItems: 'center',
   },
-  toggleButtonText: {
-    fontSize: 14,
+  switchText: {
+    fontSize: 16,
     color: theme.colors.primary,
-    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
 });

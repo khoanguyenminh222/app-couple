@@ -31,6 +31,9 @@
     "plugins": [
       
     ],
-    "description": "Ứng dụng dành cho cặp đôi - gắn kết, lưu giữ kỷ niệm và quản lý cuộc sống chung"
+    "extra": {
+      "SUPABASE_URL": "https://nicxklhclblgzenbmxdm.supabase.co",
+      "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pY3hrbGhjbGJsZ3plbmJteGRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4Njk1NjcsImV4cCI6MjA3MTQ0NTU2N30.1nBIaDXMFlGMOGbMSbXQtWOFXGmGsS1YlsresmXf4Ko"
+    }
   }
 }

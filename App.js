@@ -6,14 +6,20 @@ import { StatusBar } from 'expo-status-bar';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ActivityIndicator, View } from 'react-native';
+
+// Context
+import { AuthProvider, useAuth } from './src/context/AuthContext';
 
 // Screens
 import LoginScreen from './src/screens/LoginScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import CalendarScreen from './src/screens/CalendarScreen';
 import TodoScreen from './src/screens/TodoScreen';
-import SettingsScreen from './src/screens/SettingsScreen';
+import ProfileInfoScreen from './src/screens/ProfileInfoScreen';
 import PairingScreen from './src/screens/PairingScreen';
+import EditProfileScreen from './src/screens/EditProfileScreen';
+import HomeScreen from './src/screens/HomeScreen';
 
 // Theme
 import { theme } from './src/theme/theme';
@@ -28,14 +34,14 @@ function TabNavigator() {
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
 
-          if (route.name === 'Profile') {
+          if (route.name === 'Home') {
             iconName = focused ? 'heart' : 'heart-outline';
           } else if (route.name === 'Calendar') {
             iconName = focused ? 'calendar' : 'calendar-outline';
           } else if (route.name === 'Todo') {
             iconName = focused ? 'checkmark-circle' : 'checkmark-circle-outline';
-          } else if (route.name === 'Settings') {
-            iconName = focused ? 'settings' : 'settings-outline';
+          } else if (route.name === 'ProfileInfo') {
+            iconName = focused ? 'diamond' : 'diamond-outline';
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -59,27 +65,120 @@ function TabNavigator() {
         },
       })}
     >
-      <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Hồ sơ' }} />
-      <Tab.Screen name="Calendar" component={CalendarScreen} options={{ title: 'Lịch hẹn' }} />
-      <Tab.Screen name="Todo" component={TodoScreen} options={{ title: 'Việc chung' }} />
-      <Tab.Screen name="Settings" component={SettingsScreen} options={{ title: 'Cài đặt' }} />
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home" size={size} color={color} />
+          ),
+          tabBarLabel: 'Trang chủ',
+        }}
+      />
+      <Tab.Screen
+        name="Calendar"
+        component={CalendarScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="calendar" size={size} color={color} />
+          ),
+          tabBarLabel: 'Lịch',
+        }}
+      />
+      <Tab.Screen
+        name="Todo"
+        component={TodoScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="checkmark-circle" size={size} color={color} />
+          ),
+          tabBarLabel: 'Công việc',
+        }}
+      />
+      <Tab.Screen
+        name="ProfileInfo"
+        component={ProfileInfoScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="diamond" size={size} color={color} />
+          ),
+          tabBarLabel: 'Thông tin',
+        }}
+      />
     </Tab.Navigator>
+  );
+}
+
+function MainNavigator() {
+  const { user, loading, isPaired } = useAuth();
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
+
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: theme.colors.primary,
+        },
+        headerTintColor: '#fff',
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+      }}
+    >
+      {!user ? (
+        // Auth screens
+        <Stack.Screen
+          name="Login"
+          component={LoginScreen}
+          options={{ headerShown: false }}
+        />
+      ) : !isPaired ? (
+        // Pairing screen
+        <Stack.Screen
+          name="Pairing"
+          component={PairingScreen}
+          options={{ 
+            title: 'Ghép đôi',
+            headerShown: false 
+          }}
+        />
+      ) : (
+        // Main app screens
+        <>
+          <Stack.Screen
+            name="Main"
+            component={TabNavigator}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="EditProfile"
+            component={EditProfileScreen}
+            options={{ title: 'Chỉnh sửa hồ sơ' }}
+          />
+        </>
+      )}
+    </Stack.Navigator>
   );
 }
 
 export default function App() {
   return (
-    <PaperProvider theme={theme}>
-      <SafeAreaProvider>
-        <NavigationContainer>
-          <Stack.Navigator initialRouteName="Login">
-            <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="Main" component={TabNavigator} options={{ headerShown: false }} />
-            <Stack.Screen name="Pairing" component={PairingScreen} options={{ headerShown: false }} />
-          </Stack.Navigator>
-          <StatusBar style="light" />
-        </NavigationContainer>
-      </SafeAreaProvider>
-    </PaperProvider>
+    <SafeAreaProvider>
+      <PaperProvider>
+        <AuthProvider>
+          <NavigationContainer>
+            <MainNavigator />
+            <StatusBar style="auto" />
+          </NavigationContainer>
+        </AuthProvider>
+      </PaperProvider>
+    </SafeAreaProvider>
   );
 }

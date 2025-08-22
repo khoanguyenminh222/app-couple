@@ -13,10 +13,15 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../theme/theme';
+import { useAuth } from '../context/AuthContext';
 
-export default function PairingScreen({ navigation }) {
+export default function PairingScreen() {
   const [partnerCode, setPartnerCode] = useState('');
+  const [anniversaryDate, setAnniversaryDate] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isCreatingCode, setIsCreatingCode] = useState(false);
+
+  const { createPairingCode, pairWithCode, couple } = useAuth();
 
   const handlePairing = async () => {
     if (!partnerCode.trim()) {
@@ -27,46 +32,56 @@ export default function PairingScreen({ navigation }) {
     setIsLoading(true);
     
     try {
-      // TODO: Gọi API để xác thực mã và ghép đôi
-      // const response = await supabaseClient
-      //   .from('pairs')
-      //   .select('*')
-      //   .eq('code', partnerCode.trim())
-      //   .single();
-
-      // Giả lập xử lý ghép đôi thành công
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      Alert.alert(
-        'Thành công!',
-        'Bạn đã được ghép đôi với người yêu thành công!',
-        [
-          {
-            text: 'Tiếp tục',
-            onPress: () => navigation.navigate('Main'),
-          },
-        ]
-      );
+      const result = await pairWithCode(partnerCode.trim());
+      if (result.success) {
+        Alert.alert(
+          'Thành công!',
+          'Bạn đã được ghép đôi với người yêu thành công!',
+          [{ text: 'Tiếp tục' }]
+        );
+      } else {
+        Alert.alert('Lỗi', result.error);
+      }
     } catch (error) {
-      Alert.alert('Lỗi', 'Mã không hợp lệ hoặc đã được sử dụng. Vui lòng thử lại.');
+      Alert.alert('Lỗi', 'Có lỗi xảy ra, vui lòng thử lại');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCreateCode = async () => {
+    if (!anniversaryDate) {
+      Alert.alert('Lỗi', 'Vui lòng chọn ngày kỷ niệm');
+      return;
+    }
+
+    setIsCreatingCode(true);
+    
+    try {
+      const result = await createPairingCode(anniversaryDate);
+      if (result.success) {
+        Alert.alert(
+          'Thành công!',
+          `Mã ghép đôi của bạn: ${result.data.pairing_code}\n\nHãy chia sẻ mã này với người yêu để họ có thể ghép đôi với bạn.`,
+          [{ text: 'Đã hiểu' }]
+        );
+      } else {
+        Alert.alert('Lỗi', result.error);
+      }
+    } catch (error) {
+      Alert.alert('Lỗi', 'Có lỗi xảy ra, vui lòng thử lại');
+    } finally {
+      setIsCreatingCode(false);
     }
   };
 
   const handleSkip = () => {
     Alert.alert(
       'Bỏ qua ghép đôi?',
-      'Bạn có thể ghép đôi sau trong phần Cài đặt. Tuy nhiên, một số chức năng sẽ bị hạn chế.',
+      'Bạn có thể ghép đôi sau trong phần Thông tin. Tuy nhiên, một số chức năng sẽ bị hạn chế.',
       [
-        {
-          text: 'Hủy',
-          style: 'cancel',
-        },
-        {
-          text: 'Bỏ qua',
-          onPress: () => navigation.navigate('Main'),
-        },
+        { text: 'Hủy', style: 'cancel' },
+        { text: 'Bỏ qua', style: 'destructive' },
       ]
     );
   };
@@ -76,90 +91,121 @@ export default function PairingScreen({ navigation }) {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView 
-        contentContainerStyle={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         <LinearGradient
           colors={theme.gradients.primary}
           style={styles.header}
         >
           <View style={styles.headerContent}>
             <View style={styles.iconContainer}>
-              <Ionicons name="heart" size={48} color={theme.colors.white} />
+              <Ionicons name="heart" size={40} color={theme.colors.white} />
             </View>
             <Text style={styles.headerTitle}>Ghép đôi với người yêu</Text>
             <Text style={styles.headerSubtitle}>
-              Nhập mã để kết nối và sử dụng tất cả chức năng
+              Kết nối để chia sẻ những khoảnh khắc đặc biệt
             </Text>
           </View>
         </LinearGradient>
 
-        {/* Content */}
         <View style={styles.content}>
+          {/* Tại sao cần ghép đôi */}
           <View style={styles.infoCard}>
-            <View style={styles.infoHeader}>
-              <Ionicons name="information-circle" size={24} color={theme.colors.primary} />
-              <Text style={styles.infoTitle}>Tại sao cần ghép đôi?</Text>
-            </View>
+            <Text style={styles.infoTitle}>Tại sao cần ghép đôi?</Text>
             <Text style={styles.infoText}>
-              Ghép đôi để kết nối với người yêu và sử dụng tất cả tính năng. Chia sẻ lịch hẹn hò, quản lý việc chung và đồng bộ thông tin. Một số chức năng sẽ không khả dụng khi chưa ghép đôi.
+              Ghép đôi giúp bạn và người yêu chia sẻ lịch hẹn, công việc chung và lưu giữ những kỷ niệm đặc biệt. Dữ liệu sẽ được đồng bộ real-time giữa hai người.
             </Text>
           </View>
 
-          <View style={styles.pairingCard}>
-            <Text style={styles.pairingTitle}>Nhập mã của đối phương</Text>
-            <Text style={styles.pairingSubtitle}>
-              Hãy xin mã từ người yêu của bạn
+          {/* Tạo mã ghép đôi */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Tạo mã ghép đôi</Text>
+            <Text style={styles.sectionSubtitle}>
+              Nếu bạn là người đầu tiên, hãy tạo mã và chia sẻ với người yêu
+            </Text>
+            
+            <View style={styles.inputContainer}>
+              <Ionicons name="calendar" size={20} color={theme.colors.primary} />
+              <TextInput
+                style={styles.input}
+                placeholder="Ngày kỷ niệm (YYYY-MM-DD)"
+                value={anniversaryDate}
+                onChangeText={setAnniversaryDate}
+                keyboardType="numeric"
+              />
+            </View>
+
+            <TouchableOpacity
+              style={[styles.createButton, isCreatingCode && styles.buttonDisabled]}
+              onPress={handleCreateCode}
+              disabled={isCreatingCode}
+            >
+              <LinearGradient
+                colors={theme.gradients.primary}
+                style={styles.buttonGradient}
+              >
+                <Text style={styles.buttonText}>
+                  {isCreatingCode ? 'Đang tạo...' : 'Tạo mã ghép đôi'}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+
+          {/* Hoặc */}
+          <View style={styles.orContainer}>
+            <View style={styles.orLine} />
+            <Text style={styles.orText}>hoặc</Text>
+            <View style={styles.orLine} />
+          </View>
+
+          {/* Nhập mã ghép đôi */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Nhập mã ghép đôi</Text>
+            <Text style={styles.sectionSubtitle}>
+              Nếu người yêu đã tạo mã, hãy nhập mã đó để ghép đôi
             </Text>
             
             <View style={styles.inputContainer}>
               <Ionicons name="key" size={20} color={theme.colors.primary} />
               <TextInput
                 style={styles.input}
+                placeholder="Nhập mã ghép đôi"
                 value={partnerCode}
                 onChangeText={setPartnerCode}
-                placeholder="Nhập mã"
-                placeholderTextColor={theme.colors.gray}
-                autoCapitalize="none"
+                autoCapitalize="characters"
               />
             </View>
 
-            <TouchableOpacity 
-              style={styles.pairButton} 
+            <TouchableOpacity
+              style={[styles.pairButton, isLoading && styles.buttonDisabled]}
               onPress={handlePairing}
               disabled={isLoading}
             >
               <LinearGradient
                 colors={theme.gradients.primary}
-                style={styles.pairButtonGradient}
+                style={styles.buttonGradient}
               >
-                <Ionicons 
-                  name={isLoading ? "hourglass" : "heart"} 
-                  size={20} 
-                  color={theme.colors.white} 
-                />
-                <Text style={styles.pairButtonText}>
-                  {isLoading ? 'Đang ghép đôi...' : 'Ghép đôi ngay'}
+                <Text style={styles.buttonText}>
+                  {isLoading ? 'Đang ghép đôi...' : 'Ghép đôi'}
                 </Text>
               </LinearGradient>
             </TouchableOpacity>
-
-            <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-              <Text style={styles.skipButtonText}>Để sau, tôi sẽ ghép đôi sau</Text>
-            </TouchableOpacity>
           </View>
 
+          {/* Help Card */}
           <View style={styles.helpCard}>
-            <View style={styles.helpHeader}>
-              <Ionicons name="help-circle" size={20} color={theme.colors.info} />
+            <Ionicons name="information-circle" size={24} color={theme.colors.primary} />
+            <View style={styles.helpContent}>
               <Text style={styles.helpTitle}>Cần hỗ trợ?</Text>
+              <Text style={styles.helpText}>
+                Mã ghép đôi có 8 ký tự, bắt đầu bằng "CP". Hãy đảm bảo nhập chính xác mã mà người yêu đã chia sẻ với bạn.
+              </Text>
             </View>
-            <Text style={styles.helpText}>
-              Nếu chưa có mã, hãy xin từ người yêu hoặc tạo mới trong Cài đặt. Ghép đôi thành công sẽ có thông báo xác nhận.
-            </Text>
           </View>
+
+          {/* Skip Button */}
+          <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
+            <Text style={styles.skipText}>Bỏ qua, ghép đôi sau</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -169,15 +215,15 @@ export default function PairingScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#fff',
   },
-  scrollContainer: {
+  scrollContent: {
     flexGrow: 1,
   },
   header: {
-    paddingTop: 40,
+    paddingTop: 60,
     paddingBottom: 40,
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: 24,
   },
   headerContent: {
     alignItems: 'center',
@@ -186,17 +232,16 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    borderWidth: 2,
-    borderColor: theme.colors.white,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: theme.spacing.lg,
+    marginBottom: 20,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: theme.colors.white,
-    marginBottom: theme.spacing.sm,
+    marginBottom: 8,
     textAlign: 'center',
   },
   headerSubtitle: {
@@ -208,127 +253,128 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: theme.spacing.lg,
+    padding: 24,
   },
   infoCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
-    ...theme.shadows.medium,
-  },
-  infoHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: theme.spacing.md,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 24,
+    borderLeftWidth: 4,
+    borderLeftColor: theme.colors.primary,
   },
   infoTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: theme.colors.text,
-    marginLeft: theme.spacing.sm,
+    marginBottom: 8,
   },
   infoText: {
     fontSize: 14,
     color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.md,
     lineHeight: 20,
   },
-  benefitsList: {
-    gap: theme.spacing.sm,
+  section: {
+    marginBottom: 24,
   },
-  benefitItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-  },
-  benefitText: {
-    fontSize: 14,
-    color: theme.colors.text,
-  },
-  pairingCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    ...theme.shadows.medium,
-  },
-  pairingTitle: {
-    fontSize: 20,
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
     color: theme.colors.text,
-    marginBottom: theme.spacing.xs,
-    textAlign: 'center',
+    marginBottom: 8,
   },
-  pairingSubtitle: {
+  sectionSubtitle: {
     fontSize: 14,
     color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.lg,
-    textAlign: 'center',
+    marginBottom: 16,
+    lineHeight: 20,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: theme.colors.lightGray,
-    borderRadius: theme.borderRadius.md,
-    paddingHorizontal: theme.spacing.md,
-    marginBottom: theme.spacing.lg,
+    borderColor: '#e9ecef',
   },
   input: {
     flex: 1,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
     fontSize: 16,
     color: theme.colors.text,
   },
-  pairButton: {
-    borderRadius: theme.borderRadius.md,
+  createButton: {
+    borderRadius: 12,
     overflow: 'hidden',
-    marginBottom: theme.spacing.md,
+    marginBottom: 8,
   },
-  pairButtonGradient: {
-    flexDirection: 'row',
+  pairButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  buttonGradient: {
+    paddingVertical: 16,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: theme.spacing.md,
-    gap: theme.spacing.sm,
   },
-  pairButtonText: {
+  buttonText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
     color: theme.colors.white,
   },
-  skipButton: {
+  orContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: theme.spacing.sm,
+    marginVertical: 24,
   },
-  skipButtonText: {
+  orLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#e9ecef',
+  },
+  orText: {
+    marginHorizontal: 16,
     fontSize: 14,
-    color: theme.colors.primary,
+    color: theme.colors.textSecondary,
     fontWeight: '600',
   },
   helpCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    marginTop: theme.spacing.lg,
-    ...theme.shadows.medium,
-  },
-  helpHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: theme.spacing.md,
+    backgroundColor: '#fff3cd',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#ffeaa7',
+  },
+  helpContent: {
+    flex: 1,
+    marginLeft: 12,
   },
   helpTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: theme.colors.text,
-    marginLeft: theme.spacing.sm,
+    color: '#856404',
+    marginBottom: 4,
   },
   helpText: {
     fontSize: 14,
-    color: theme.colors.textSecondary,
+    color: '#856404',
     lineHeight: 20,
+  },
+  skipButton: {
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  skipText: {
+    fontSize: 16,
+    color: theme.colors.textSecondary,
+    textDecorationLine: 'underline',
   },
 });
