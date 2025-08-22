@@ -1,29 +1,36 @@
 {
   "expo": {
-    "name": "app-couple",
-    "slug": "app-couple",
+    "name": "Love Together",
+    "slug": "love-together",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#FF6B9D"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.lovetogether.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#FF6B9D"
       },
-      "edgeToEdgeEnabled": true
+      "package": "com.lovetogether.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      
+    ],
+    "description": "Ứng dụng dành cho cặp đôi - gắn kết, lưu giữ kỷ niệm và quản lý cuộc sống chung"
   }
 }

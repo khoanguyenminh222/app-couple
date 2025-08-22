@@ -1,0 +1,108 @@
+export const theme = {
+  colors: {
+    primary: '#FF6B9D',
+    secondary: '#FFB6C1',
+    accent: '#FFD700',
+    background: '#FFF5F7',
+    surface: '#FFFFFF',
+    text: '#333333',
+    textSecondary: '#666666',
+    success: '#4CAF50',
+    error: '#F44336',
+    warning: '#FF9800',
+    info: '#2196F3',
+    love: '#FF1493',
+    heart: '#FF69B4',
+    pink: '#FFC0CB',
+    lightPink: '#FFE4E1',
+    white: '#FFFFFF',
+    black: '#000000',
+    gray: '#9E9E9E',
+    lightGray: '#F5F5F5',
+    darkGray: '#424242',
+  },
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 16,
+    lg: 24,
+    xl: 32,
+    xxl: 48,
+  },
+  borderRadius: {
+    sm: 8,
+    md: 12,
+    lg: 16,
+    xl: 24,
+    round: 50,
+  },
+  typography: {
+    h1: {
+      fontSize: 32,
+      fontWeight: 'bold',
+      color: '#333333',
+    },
+    h2: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: '#333333',
+    },
+    h3: {
+      fontSize: 20,
+      fontWeight: '600',
+      color: '#333333',
+    },
+    body: {
+      fontSize: 16,
+      color: '#333333',
+    },
+    caption: {
+      fontSize: 14,
+      color: '#666666',
+    },
+    button: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: '#FFFFFF',
+    },
+  },
+  shadows: {
+    small: {
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 3.84,
+      elevation: 5,
+    },
+    medium: {
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.15,
+      shadowRadius: 6.27,
+      elevation: 8,
+    },
+    large: {
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 8,
+      },
+      shadowOpacity: 0.2,
+      shadowRadius: 10.32,
+      elevation: 12,
+    },
+  },
+  gradients: {
+    primary: ['#FF6B9D', '#FFB6C1'],
+    secondary: ['#FFD700', '#FFA500'],
+    love: ['#FF1493', '#FF69B4'],
+    sunset: ['#FF6B6B', '#FFE66D'],
+    ocean: ['#4ECDC4', '#44A08D'],
+  },
+};
